@@ -1,0 +1,6 @@
+[toolchain]
+# Fijo, no «stable»: la CI y este equipo usan el mismo Clippy (un stable mas
+# nuevo en la CI traia lints que aqui no salian). Subirlo a mano.
+channel = "1.97.1"
+components = ["clippy", "rustfmt"]
+targets = ["x86_64-pc-windows-msvc", "aarch64-pc-windows-msvc"]

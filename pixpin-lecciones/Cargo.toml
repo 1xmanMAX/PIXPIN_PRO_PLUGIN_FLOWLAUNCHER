@@ -1,0 +1,13 @@
+[package]
+name = "pixpin-lecciones"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+# Las lecciones aprendidas, sin ventanas ni disco: la ficha, el repaso, el
+# buscador, las etiquetas que se ponen solas, el dictado repartido y la
+# fusion de dos versiones de una misma leccion. Cimiento: solo serde, para
+# que lo pueda usar tambien el cable de sincronizar.
+[dependencies]
+serde_json = "1.0"

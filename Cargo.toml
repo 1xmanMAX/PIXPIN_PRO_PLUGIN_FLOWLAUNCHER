@@ -1,0 +1,25 @@
+# El plugin de Flow Launcher de PixPin Max, aparte de la app.
+#
+# Dos crates: el plugin (`pixpin-lanzador`) y las lecciones aprendidas
+# (`pixpin-lecciones`), que el plugin lee igual que la app. Son copia de los
+# de https://github.com/1xmanMAX/PIXPIN_PRO_WINDOWS (apps/pixpin-lanzador y
+# crates/pixpin-lecciones), donde se desarrollan.
+[workspace]
+resolver = "3"
+members = ["pixpin-lanzador", "pixpin-lecciones"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+license = "MIT"
+authors = ["Max Anthony Mamani Maquera"]
+repository = "https://github.com/1xmanMAX/PIXPIN_PRO_PLUGIN_FLOWLAUNCHER"
+
+# Flow arranca el exe una vez por tecla: pequeno y rapido de cargar.
+[profile.release]
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = true
+opt-level = 3
