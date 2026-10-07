@@ -7,7 +7,7 @@
 //! - una letra sola, o una letra y un blanco: el atajo de una funcion
 //!   (`t <texto>` apunta una tarea en el Inbox, `n` nota, `l` lienzo,
 //!   `g` galeria, `c` capturar, `u` ultima captura, `a` «aprendi»: una
-//!   leccion nueva). Una letra pegada a
+//!   leccion nueva, `m` mandar la imagen pegada al lienzo del movil). Una letra pegada a
 //!   otras («tx», «nota») es lo de siempre;
 //! - `<proyecto> > [texto]`: el chat de ese proyecto, de lo ultimo a lo
 //!   primero (con un verbo delante tambien, si lo de antes de `>` es el
@@ -41,11 +41,14 @@ pub enum Funcion {
     Galeria,
     /// Sacar la ultima captura como pin (pedido `pinear_ultima`).
     Ultima,
+    /// Mandar las imagenes pegadas al lienzo abierto de un movil del grupo
+    /// (pedido `enviar_al_movil`).
+    Movil,
     Abrir,
 }
 
 impl Funcion {
-    pub const TODAS: [Funcion; 14] = [
+    pub const TODAS: [Funcion; 15] = [
         Funcion::Chat,
         Funcion::Tareas,
         Funcion::Lienzo,
@@ -59,6 +62,7 @@ impl Funcion {
         Funcion::Capturas,
         Funcion::Galeria,
         Funcion::Ultima,
+        Funcion::Movil,
         Funcion::Abrir,
     ];
 
@@ -67,7 +71,7 @@ impl Funcion {
     /// encontraba dejaba «Chat» elegido, e Intro lo mandaba a Mensajes
     /// guardados. Escribir en un chat es entrar en el (`<proyecto> > texto`)
     /// o, a proposito, `chat <texto>`.
-    pub const OFRECIDAS: [Funcion; 13] = [
+    pub const OFRECIDAS: [Funcion; 14] = [
         Funcion::Tareas,
         Funcion::Lienzo,
         Funcion::Nota,
@@ -80,6 +84,7 @@ impl Funcion {
         Funcion::Capturas,
         Funcion::Galeria,
         Funcion::Ultima,
+        Funcion::Movil,
         Funcion::Abrir,
     ];
 
@@ -111,6 +116,8 @@ impl Funcion {
             Funcion::Capturas => &["capturas", "screenshots", "recortes"],
             Funcion::Galeria => &["galeria", "gallery"],
             Funcion::Ultima => &["ultima", "last"],
+            // «móvil» normalizado es «movil».
+            Funcion::Movil => &["movil", "enviar", "celular", "telefono", "phone", "mobile"],
             Funcion::Abrir => &["pixpin", "abrir", "open"],
         }
     }
@@ -123,11 +130,12 @@ impl Funcion {
             Funcion::Lecciones => "lecciones",
             Funcion::Galeria => "galería",
             Funcion::Ultima => "última",
+            Funcion::Movil => "móvil",
             _ => self.alias()[0],
         }
     }
 
-    /// La funcion de una letra sola (`t`, `n`, `l`, `g`, `c`, `u`, `a`). La
+    /// La funcion de una letra sola (`t`, `n`, `l`, `g`, `c`, `u`, `a`, `m`). La
     /// `a` es «aprendi»: apuntar una leccion (la `l` ya era del lienzo).
     pub fn atajo(letra: &str) -> Option<Funcion> {
         Some(match normalizar(letra).as_str() {
@@ -138,6 +146,7 @@ impl Funcion {
             "c" => Funcion::Capturar,
             "u" => Funcion::Ultima,
             "a" => Funcion::Leccion,
+            "m" => Funcion::Movil,
             _ => return None,
         })
     }
@@ -152,6 +161,7 @@ impl Funcion {
             Funcion::Capturar => 'c',
             Funcion::Ultima => 'u',
             Funcion::Leccion => 'a',
+            Funcion::Movil => 'm',
             _ => return None,
         })
     }
@@ -474,5 +484,23 @@ mod pruebas {
                 filtro: "".into()
             }
         );
+    }
+
+    #[test]
+    fn movil_enviar_y_celular_y_la_m_mandan_al_movil() {
+        let f = Funcion::Movil;
+        assert_eq!(analizar("móvil"), verbo(f, "", None));
+        assert_eq!(analizar("movil [img 01]"), verbo(f, "[img 01]", None));
+        assert_eq!(
+            analizar("Celular [img 01] pixel"),
+            verbo(f, "[img 01] pixel", None)
+        );
+        assert_eq!(analizar("enviar [img 02]"), verbo(f, "[img 02]", None));
+        assert_eq!(analizar("m [img 01]"), verbo(f, "[img 01]", None));
+        assert_eq!(analizar("m"), verbo(f, "", None));
+        assert_eq!(Funcion::Movil.letra(), Some('m'));
+        // Caso negativo: la «m» pegada a otras letras es buscar («mapa»).
+        assert_eq!(analizar("mapa"), buscar("mapa", None));
+        assert_eq!(analizar("mx y"), buscar("mx y", None));
     }
 }

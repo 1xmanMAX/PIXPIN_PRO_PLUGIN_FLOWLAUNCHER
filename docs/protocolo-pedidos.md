@@ -47,7 +47,7 @@ el plugin de Flow Launcher (`apps/pixpin-lanzador`), y sirve igual para un scrip
 | `mover_tarea` | `proyecto?`, `codigo`, `indice`, `a_proyecto?`, `a_codigo` | Pasa la tarea numero `indice` (desde 0, en el orden del documento) de la lista `codigo` (del chat `proyecto`) al final de la lista `a_codigo` (del chat `a_proyecto`; ausente = «Mensajes guardados»), con su fecha y su estado, como «Mover a…» de la ventana de tareas. Si la tarea cambio entre medias no se toca nada y se avisa |
 | `quitar_tarea` | `proyecto?`, `codigo`, `indice` | Quita la tarea numero `indice` (desde 0, en el orden del documento) de la lista `codigo`, como su aspa en la ventana de tareas (`Tareas.borrar` del móvil). La lista se reescribe en su mensaje y asi viaja al móvil. Si no hay esa tarea, o `codigo` no es una lista, no se toca nada y se avisa |
 | `borrar_lista` | `proyecto?`, `codigo` | Borra la lista `codigo` **entera**, con todas sus tareas: su mensaje sale del chat por el mismo camino que «Borrar» en el chat (sale de `guardados.jsonl` y deja su marca en `sincro\borrados.jsonl`, para que el móvil tambien la quite en la siguiente vuelta). No se pregunta ni se puede deshacer: quien lo manda ya pregunto. Las imagenes de sus tareas se quedan en `archivos/`. El Inbox tambien se puede borrar: se vuelve a crear con la siguiente tarea apuntada. Si `codigo` no es una lista, no se toca nada y se avisa |
-| `ventana` | `cual: "tareas" \| "galeria" \| "lecciones"` | Abre (o trae delante) esa ventana, como su entrada de la bandeja. Otro `cual` es un pedido roto |
+| `ventana` | `cual: "tareas" \| "galeria" \| "lecciones" \| "sincronizar"` | Abre (o trae delante) esa ventana, como su entrada de la bandeja. Otro `cual` es un pedido roto |
 | `capturar` | `modo?: "zona"` | Empieza la captura de una zona, la misma del atajo general («Capturar» de la bandeja), unos 300 ms despues para que el lanzador ya se haya escondido. Sin `modo`, `"zona"`; otro modo es un pedido roto |
 | `pinear_ultima` | — | Saca a la pantalla como pin la captura mas reciente de la carpeta de capturas (la primera de la galeria), como `pinear` con su `ruta`. Sin capturas, se avisa |
 | `conservar_captura` | `ruta` | Como «Conservar» de la galeria: la captura entra en «Mensajes guardados» y deja de caducar. Solo vale una `ruta` que este en la carpeta de capturas (`<raiz>\capturas\`); otra se rechaza con aviso |
@@ -60,6 +60,33 @@ el plugin de Flow Launcher (`apps/pixpin-lanzador`), y sirve igual para un scrip
 | `reproducir` | `ruta`, `titulo?` | Hace sonar un audio (m4a, mp3, wav…) en un reproductor flotante siempre encima, sin abrir el chat: atras 10 s, play/pausa, adelante 10 s, velocidad, pista para saltar y aspa. Espacio pausa, flechas saltan, Esc cierra. Se cierra sola al acabar. Si ya hay uno abierto, cambia de pista. `titulo` es lo que se lee; sin el, el nombre del fichero |
 | `leccion_nueva` | `texto?`, `proyecto?`, `imagenes?` | Abre la ficha de una lección aprendida nueva, como «Nueva lección» del móvil. Con `texto`, se reparte solo («pasó que…, porque…, la próxima vez…») y se proponen etiquetas, área, tipo y causas. Nada se guarda hasta pulsar Guardar o Esc (que guarda, como el «atrás» del móvil); la «×» descarta. Irá al chat de `proyecto` (sin él, «Mensajes guardados»). `imagenes` (rutas absolutas, como en `anadir_tarea`) son **las fotos de la lección**: se leen al recibir el pedido, la ficha dice «📎 N fotos» y, al guardar, cada una va a `archivos/` del chat (`leccion-<ms>-NN.<ext>`, un `.bmp` como `.png`) con su mensaje `IMAGEN` «Foto de la lección» que **responde** al de la lección (`respondeA: "lec-<id>"`), y su id entra en `adjuntos` del `.leccion`, como hace el móvil. Las fichas `[img 01]`… salen del texto. Si falta una imagen o no lo es, no se abre nada y se avisa |
 | `lecciones` | `proyecto?`, `consulta?` | Abre la lista de lecciones (buscador, repaso de hoy, lista de comprobación). Con `proyecto`, primero las suyas y las que hablan de lo mismo; con `consulta`, ya buscando. Una sola ventana: pedirla otra vez la trae delante |
+| `enviar_al_movil` | `aparato`, `imagenes?`, `archivos?` | Manda esas imagenes (rutas absolutas) **al lienzo que el móvil `aparato` tiene abierto** (`aparato` es su `id` en el grupo, `sincro\identidad.json`), sin abrir Sincronizar en ninguno de los dos. Ver abajo. Sin nada que mandar, o con un fichero que no esta, no sale nada y se avisa |
+
+### Una imagen al lienzo del móvil (`enviar_al_movil`, 6-oct-2026)
+
+```json
+{ "pixpin": 1, "accion": "enviar_al_movil", "aparato": "6f1c…-…",
+  "imagenes": ["C:\\Users\\yo\\AppData\\Roaming\\PixPinMax\\cache\\lanzador-imagenes\\img-1.png"] }
+```
+
+- La app contesta «aceptado» al momento y lo hace **en un hilo** (`sincronizar::al_movil`):
+  busca al móvil en su ultima direccion (`sincro\direcciones.txt`, un `PING` de un segundo) y,
+  si no contesta, por mDNS (`_pixpin._tcp`, por el `id` y la etiqueta del grupo de su TXT);
+  conecta por el canal cifrado del grupo (puerto 47474), saluda y manda cada fichero con la
+  peticion `suelto` (`crates/pixpin-sincro/src/al_lienzo.rs`).
+- El móvil la pone **en el centro del lienzo que tenga delante** y la guarda; si no tiene un
+  lienzo abierto, va a su Conversación general. Lo que no es una imagen (`archivos`) va siempre
+  a su chat.
+- Lo que pasó se dice en el globo al acabar: «Enviada al lienzo de Pixel», «Pixel la guardó en
+  el chat (no tenía un lienzo abierto)», «Pixel no está abierto: abre PixPin en el móvil» (solo
+  escucha con una pantalla de PixPin a la vista). Un PixPin del móvil anterior a esto contesta
+  «No sé qué es «suelto»»: se dice «Actualiza PixPin en Pixel…» y se abre «Enviar por Wi-Fi» con
+  los mismos ficheros, el envío de siempre.
+- En el lanzador: `p móvil` (o `enviar`, `celular`, `m`) + Ctrl+V de la imagen (`[img 01]`):
+  sale una fila por aparato del grupo; Intro manda. Lo escrito detras de las fichas elige el
+  móvil por su nombre (`p m [img 01] pixel`). Sin grupo, la fila abre Sincronizar
+  (`ventana {cual:"sincronizar"}`).
+- Lo que tiene que hacer el móvil: `docs/investigacion/2026-10-06-foto-al-lienzo-android.md`.
 
 ### Tareas con imagenes (`anadir_tarea.imagenes`)
 

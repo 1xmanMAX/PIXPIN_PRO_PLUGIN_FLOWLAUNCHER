@@ -18,6 +18,7 @@
 //! este cerrada; abrir, crear o marcar es pedirselo a la app ([`pedido`]),
 //! que es la unica que escribe sus ficheros.
 
+pub mod al_movil;
 pub mod capturas;
 pub mod chat;
 pub mod consulta;

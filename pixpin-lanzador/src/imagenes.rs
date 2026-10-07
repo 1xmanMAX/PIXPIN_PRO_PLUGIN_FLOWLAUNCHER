@@ -656,7 +656,7 @@ pub fn con_imagenes(r: &mut Resultado, texto: &str, ctx: &Contexto) {
         return;
     }
     let es_chat = matches!(&r.accion,
-        Accion::Pedido(p) | Accion::PedirYSeguir { pedido: p, .. } if p["accion"] == "chat");
+        Accion::Pedido(p) | Accion::PedirYSeguir { pedido: p, .. } if p["accion"] == "chat" || p["accion"] == "enviar_al_movil");
     let mut borrador = ctx
         .raiz_de_datos()
         .and_then(|raiz| leer_borrador(&raiz, ctx.ahora));
@@ -780,6 +780,10 @@ pub fn resultado_pegar(busqueda: &str, ctx: &Contexto) -> Option<Resultado> {
             funcion: Funcion::Leccion,
             ..
         } => "la lección, como foto",
+        Modo::Verbo {
+            funcion: Funcion::Movil,
+            ..
+        } => "lo que mandas al móvil",
         _ => "la tarea",
     };
     let sub = format!("Intro: la imagen del portapapeles va en {en}; sigue escribiendo detrás");

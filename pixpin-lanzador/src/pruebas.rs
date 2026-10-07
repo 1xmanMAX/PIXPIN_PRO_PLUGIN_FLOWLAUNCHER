@@ -273,6 +273,7 @@ fn vacio_da_las_funciones_y_los_proyectos_recientes() {
             "Capturas",
             "Galería de capturas",
             "Última captura",
+            "Enviar al móvil",
             "Abrir PixPin",
             "Gestión de proyectos",
             "Thesis",
@@ -292,15 +293,15 @@ fn vacio_da_las_funciones_y_los_proyectos_recientes() {
     );
     // Un proyecto ya no abre la app: entra en su chat.
     assert_eq!(
-        v[13].accion,
+        v[14].accion,
         Accion::Consulta("pp Gestión de proyectos > ".into())
     );
     assert_eq!(
-        v[13].autocompletar.as_deref(),
+        v[14].autocompletar.as_deref(),
         Some("pp Gestión de proyectos > ")
     );
     assert_eq!(
-        v[15].accion,
+        v[16].accion,
         Accion::Consulta("pp Mensajes guardados > ".into())
     );
 }
@@ -2901,4 +2902,127 @@ fn el_borrador_olvida_los_ficheros_que_ya_no_estan_en_la_caja() {
     // Sin ninguna ficha, el borrador se va (y el siguiente empieza en 01).
     imagenes::podar(&r, "Thesis > hola", despues);
     assert!(imagenes::leer_borrador(&r, despues).is_none());
+}
+
+// --- Enviar al movil (6-oct) -------------------------------------------------
+
+/// Este PC (`pc`) en un grupo con dos moviles; solo `tel` ha contestado
+/// alguna vez (tiene direccion apuntada).
+fn raiz_en_grupo(etiqueta: &str, codigo: Option<&str>) -> PathBuf {
+    let r = raiz(etiqueta);
+    let s = r.join("sincro");
+    fs::create_dir_all(&s).unwrap();
+    fs::write(
+        s.join("identidad.json"),
+        json!({
+            "yo": { "id": "pc", "nombre": "Portatil", "letra": "A" },
+            "codigo": codigo,
+            "miembros": [
+                { "id": "pc", "nombre": "Portatil", "letra": "A" },
+                { "id": "tab", "nombre": "Tableta", "letra": "C", "desde": 5 },
+                { "id": "tel", "nombre": "Pixel de Max", "letra": "B", "otroCampo": 1 }
+            ]
+        })
+        .to_string(),
+    )
+    .unwrap();
+    fs::write(s.join("direcciones.txt"), "tel\t192.168.1.20\t47474\n").unwrap();
+    r
+}
+
+/// Una imagen pegada como `[img 01]` en el borrador de ahora.
+fn pegar_una(r: &Path) -> PathBuf {
+    let img = imagenes::carpeta(r).join("pegada.png");
+    fs::create_dir_all(img.parent().unwrap()).unwrap();
+    fs::write(&img, b"png").unwrap();
+    assert!(imagenes::apuntar(
+        r,
+        1,
+        &img,
+        None,
+        crate::datos::ahora_ms()
+    ));
+    img
+}
+
+#[test]
+fn con_una_imagen_pegada_sale_un_movil_por_aparato_del_grupo() {
+    let r = raiz_en_grupo("movil-aparatos", Some("ABCD2345"));
+    let img = pegar_una(&r);
+    let v = buscar_con(&r, "movil [img 01]", imagenes::SIN_PORTAPAPELES);
+    let titulos: Vec<&str> = v.iter().map(|x| x.titulo.as_str()).collect();
+    // Este PC no sale; el que ya contesto alguna vez, primero.
+    assert_eq!(
+        titulos,
+        [
+            "Enviar a Pixel de Max · al lienzo abierto",
+            "Enviar a Tableta · al lienzo abierto"
+        ]
+    );
+    let p = pedido_de(&v[0]);
+    assert_eq!(p["accion"], "enviar_al_movil");
+    assert_eq!(p["aparato"], "tel");
+    assert_eq!(p["imagenes"], json!([img.to_string_lossy()]));
+    assert!(
+        v[0].subtitulo.starts_with("📎 1 imagen · Letra B"),
+        "{}",
+        v[0].subtitulo
+    );
+    assert!(
+        v[1].subtitulo.contains("Aún no se ha conectado"),
+        "{}",
+        v[1].subtitulo
+    );
+    assert_eq!(v[0].glifo, crate::resultados::glifo::MOVIL);
+    // La «m» y lo escrito detras eligen el movil por su nombre.
+    let v = buscar_con(&r, "m [img 01] tabl", imagenes::SIN_PORTAPAPELES);
+    assert_eq!(v.len(), 1);
+    assert_eq!(pedido_de(&v[0])["aparato"], "tab");
+}
+
+#[test]
+fn caso_negativo_sin_imagen_pegada_se_explica_como_pegarla() {
+    let r = raiz_en_grupo("movil-sin-imagen", Some("ABCD2345"));
+    let v = buscar_con(&r, "móvil", imagenes::SIN_PORTAPAPELES);
+    assert_eq!(v.len(), 1);
+    assert_eq!(v[0].titulo, "Pega una imagen con Ctrl+V");
+    assert!(matches!(v[0].accion, Accion::Consulta(_)));
+    // Con una imagen copiada y la app cerrada se ofrece pegarla arriba.
+    let v = buscar_con(&r, "móvil", CON_IMAGEN);
+    assert!(matches!(v[0].accion, Accion::PegarImagen { numero: 1, .. }));
+    assert!(v[0].subtitulo.contains("móvil"), "{}", v[0].subtitulo);
+    // Una ficha que ya no esta en el borrador no manda nada.
+    let v = buscar_con(&r, "movil [img 03]", imagenes::SIN_PORTAPAPELES);
+    assert_eq!(v.len(), 1);
+    assert!(
+        v[0].titulo.starts_with("Esa imagen ya no está"),
+        "{}",
+        v[0].titulo
+    );
+}
+
+#[test]
+fn caso_negativo_sin_grupo_se_ofrece_abrir_sincronizar() {
+    let r = raiz_en_grupo("movil-sin-grupo", None);
+    pegar_una(&r);
+    let v = buscar_con(&r, "celular [img 01]", imagenes::SIN_PORTAPAPELES);
+    assert_eq!(v.len(), 1);
+    assert_eq!(v[0].titulo, "Este PC no está en un grupo");
+    let p = pedido_de(&v[0]);
+    assert_eq!(p["accion"], "ventana");
+    assert_eq!(p["cual"], "sincronizar");
+    // Y sin carpeta `sincro` tampoco hay grupo.
+    let r = raiz("movil-sin-sincro");
+    assert!(crate::al_movil::del_grupo(&r).is_none());
+}
+
+#[test]
+fn enviar_al_movil_sale_en_la_lista_de_funciones() {
+    let r = raiz("movil-funciones");
+    let v = buscar_con(&r, "", imagenes::SIN_PORTAPAPELES);
+    let f = v
+        .iter()
+        .find(|x| x.titulo == "Enviar al móvil")
+        .expect("la funcion se ofrece");
+    assert_eq!(f.accion, Accion::Consulta("pp móvil ".into()));
 }

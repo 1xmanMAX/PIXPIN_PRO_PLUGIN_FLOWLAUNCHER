@@ -8,6 +8,10 @@ Escribe **`p`** y lo que quieras hacer.
 - Apuntar, marcar, mover y quitar tareas, y borrar listas, sin salir de Flow.
 - Escribir en el chat de un proyecto, crear notas y lienzos, grabar, capturar.
 - Pegar imágenes y archivos con `Ctrl V` (aparecen como `[img 01]` y `[archivo 01]`).
+- **Enviar una foto al móvil** (`p m`): pegas la imagen, eliges un aparato de tu grupo de
+  sincronización y aparece en el lienzo que tengas abierto en PixPin Android, sin abrir
+  Sincronizar. Hace falta PixPin Android con soporte para recibir fotos al lienzo; si el móvil
+  aún no lo tiene, PixPin te lo dice y ofrece el envío de siempre.
 
 ## Uso
 
@@ -25,6 +29,7 @@ p u                             → pinear la última captura
 p a revisar la escala           → lección aprendida nueva
 p lecciones grietas             → buscar lecciones
 p cualquier cosa @Tesis         → buscar, solo en ese proyecto
+p m [img 01]                    → enviar la imagen al lienzo abierto del móvil (elige el aparato)
 ```
 
 En una tarea, **Intro** la marca como hecha (o la desmarca). El menú contextual de una tarea
