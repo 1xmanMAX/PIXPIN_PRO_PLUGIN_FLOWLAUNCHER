@@ -1,0 +1,51 @@
+# Compila el plugin y publica la release que descarga la tienda de Flow
+# Launcher (Flow.Launcher.PluginsManifest mira las releases cada 3 horas).
+# Se lanza al subir una etiqueta vX.Y.Z, que tiene que ser la Version de
+# plugin.json.
+name: Publicar
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publicar:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Compilar
+        run: cargo build --release -p pindesk-lanzador
+      - name: Empaquetar
+        id: zip
+        shell: pwsh
+        run: |
+          $plugin = Get-Content pindesk-lanzador/plugin/plugin.json -Raw | ConvertFrom-Json
+          $version = $plugin.Version
+          if ("${{ github.ref_type }}" -eq "tag" -and "${{ github.ref_name }}" -ne "v$version") {
+            throw "La etiqueta ${{ github.ref_name }} no es la Version de plugin.json (v$version)"
+          }
+          $dir = "PinDesk"
+          New-Item -ItemType Directory $dir | Out-Null
+          Copy-Item pindesk-lanzador/plugin/plugin.json $dir
+          Copy-Item -Recurse pindesk-lanzador/plugin/Images $dir
+          Copy-Item target/release/pindesk-lanzador.exe $dir
+          $zip = "PinDesk-$version.zip"
+          Compress-Archive -Path "$dir\*" -DestinationPath $zip
+          "zip=$zip" >> $env:GITHUB_OUTPUT
+          "version=$version" >> $env:GITHUB_OUTPUT
+      - name: Publicar la release
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" "${{ steps.zip.outputs.zip }}" --title "PinDesk para Flow Launcher ${{ steps.zip.outputs.version }}" --notes "Plugin de PinDesk para Flow Launcher. Necesita PinDesk instalado: https://github.com/1xmanMAX/PINDESK-"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PinDesk-plugin
+          path: ${{ steps.zip.outputs.zip }}

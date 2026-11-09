@@ -1,0 +1,41 @@
+# El plugin de Flow Launcher de PinDesk (`pp`), en su propio ejecutable.
+#
+# Flow 2.1.4 lo arranca una vez por tecla (`Executable`; su `Executable_V2`,
+# el que se queda vivo y habla JSON-RPC por stdin/stdout, carga en realidad el
+# v1), asi que tiene que ser pequeno y no cargar nada de la app:
+# lee el disco de PixPin con sus propios structs de solo lectura y, para
+# cambiar algo, le manda un pedido a la app (docs/protocolo-pedidos.md). Por
+# eso no depende de pindesk-proyecto ni de pindesk-shell: arrastrarian D3D, zip y
+# un crate `windows` de cuarenta features para leer tres JSON.
+#
+# Las unicas excepciones son `pindesk-calculadora` (las cuentas, abajo), `pindesk-frase` (sin dependencias: entender una
+# tarea escrita igual que la app) y `pindesk-lecciones` (capa 0, solo serde_json): leer un
+# `.leccion`, buscar como el movil y saber cuales tocan repasar hoy tiene que
+# dar lo mismo que en la app, y copiar esa logica aqui la haria divergir.
+[package]
+name = "pindesk-lanzador"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "pindesk-lanzador"
+path = "src/main.rs"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+pindesk-lecciones = { path = "../crates/pindesk-lecciones" }
+# Lo que se reconoce al apuntar una tarea (#etiquetas, urgencia, fecha): el
+# MISMO parser que la app, sin dependencias (capa 0 como pindesk-lecciones).
+pindesk-frase = { path = "../crates/pindesk-frase" }
+# La calculadora (`p = 2x+3=7`, 8-nov-2026): el motor de Calculator PROMAX
+# con lo de PinDesk alrededor, el mismo que el chat y el asistente. Sin
+# dependencias de fuera (solo serde_json, que ya esta) y la cuenta se hace en
+# este mismo proceso, sin la app.
+pindesk-calculadora = { path = "../crates/pindesk-calculadora" }
+windows = { version = "0.62.2", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging", "Win32_System_DataExchange", "Win32_System_Time", "Win32_Storage_FileSystem", "Win32_System_Threading", "Win32_System_Memory"] }

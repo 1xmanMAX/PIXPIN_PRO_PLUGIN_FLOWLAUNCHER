@@ -1,0 +1,14 @@
+[package]
+name = "pindesk-frase"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+# Lo que se entiende de una frase escrita, sin ventanas, disco ni reloj: las
+# fechas dichas en español (`fechas`, la de las tareas del asistente) y lo
+# que se reconoce al apuntar una tarea (`tarea`: #etiquetas, urgencia y hora
+# de recordar). Cimiento SIN dependencias, como pindesk-lecciones: lo usan la
+# app, el asistente (pindesk-ia) y el plugin de Flow Launcher, y asi los tres
+# entienden lo mismo con un solo parser.
+[dependencies]

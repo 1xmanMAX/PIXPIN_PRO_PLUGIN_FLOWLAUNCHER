@@ -1,0 +1,16 @@
+{
+  "$schema": "https://www.flowlauncher.com/schemas/plugin.schema.json",
+  "ID": "8ABF9A87927D461EA54F3F6082337EF2",
+  "ActionKeywords": [
+    "p",
+    "P"
+  ],
+  "Name": "PinDesk",
+  "Description": "Busca y abre en PinDesk tus chats, tareas, lecciones, notas y archivos; apunta tareas, calcula (p = 2x+3=7) y manda cosas a la app sin salir de Flow. Necesita PinDesk instalado.",
+  "Author": "Max Anthony Mamani Maquera",
+  "Version": "1.0.0",
+  "Language": "Executable",
+  "Website": "https://github.com/1xmanMAX/PINDESK-",
+  "IcoPath": "Images\\pindesk.png",
+  "ExecuteFileName": "pindesk-lanzador.exe"
+}

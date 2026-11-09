@@ -1,0 +1,28 @@
+# Copia del motor de algebra de Calculator PROMAX
+# (github.com/1xmanMAX/calculator-PROMAX, crates/promax-core). Ver
+# PROCEDENCIA.md: de donde sale, que commit, y como se actualiza.
+#
+# Como con pdfsqueeze-core, el codigo va tal cual y este Cargo.toml es
+# propio: alli la version, la edicion y la licencia venian del
+# `[workspace.package]` de Calculator PROMAX y aqui estan escritas a mano con
+# los mismos valores. La edicion se queda en 2021 (la suya) y no en la 2024
+# del workspace: cambiarle la edicion es cambiarle las reglas del lenguaje.
+# No tiene ninguna dependencia, y asi tiene que seguir (lo vigila una prueba
+# de pindesk-calculadora).
+[package]
+name = "promax-core"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.80"
+license = "MIT"
+publish = false
+description = "Zero-dependency computer algebra & numeric engine for Calculator PROMAX"
+
+[dependencies]
+
+# En Calculator PROMAX Clippy es informativo (no bloquea su CI) y su codigo
+# no esta escrito para el `-D warnings` de PinDesk. No se reescribe para
+# contentarlo: se apagan los avisos de Clippy de este paquete, y solo de
+# este (ver PROCEDENCIA.md).
+[lints.clippy]
+all = { level = "allow", priority = -1 }

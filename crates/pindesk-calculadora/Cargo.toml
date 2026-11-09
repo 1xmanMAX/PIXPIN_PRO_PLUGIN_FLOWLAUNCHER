@@ -1,0 +1,17 @@
+[package]
+name = "pindesk-calculadora"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+# **Calculator PROMAX dentro de PinDesk** (8-nov-2026): las cuentas exactas
+# del motor de algebra de la otra app del autor (`promax-core`, copiado en
+# crates/promax-core) con lo que PinDesk necesita alrededor: entender `= ...`
+# en el chat, resolver sola una ecuacion, la herramienta `calcular` del
+# asistente, el texto para Flow Launcher y encontrar la app instalada. Logica
+# pura y portable (nucleo de Linux en la CI): lo comparten la app, el
+# asistente y el plugin de Flow, asi los tres calculan igual.
+[dependencies]
+promax-core = { path = "../promax-core" }
+serde_json = "1.0"
