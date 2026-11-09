@@ -1,7 +1,7 @@
 # Compila el plugin y publica la release que descarga la tienda de Flow
 # Launcher (Flow.Launcher.PluginsManifest mira las releases cada 3 horas).
-# Se lanza al subir una etiqueta vX.Y.Z, que tiene que ser la Version de
-# plugin.json.
+# Se lanza al subir una etiqueta vX.Y.Z (que tiene que ser la Version de
+# plugin.json) o a mano (Actions → Publicar → Run workflow).
 name: Publicar
 
 on:
@@ -38,13 +38,17 @@ jobs:
           Compress-Archive -Path "$dir\*" -DestinationPath $zip
           "zip=$zip" >> $env:GITHUB_OUTPUT
           "version=$version" >> $env:GITHUB_OUTPUT
+      # Con la etiqueta subida, o lanzado a mano: entonces la etiqueta
+      # vX.Y.Z (la Version de plugin.json) la crea la propia release.
       - name: Publicar la release
-        if: github.ref_type == 'tag'
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${{ github.ref_name }}" "${{ steps.zip.outputs.zip }}" --title "PinDesk para Flow Launcher ${{ steps.zip.outputs.version }}" --notes "Plugin de PinDesk para Flow Launcher. Necesita PinDesk instalado: https://github.com/1xmanMAX/PINDESK-"
+          $tag = "v${{ steps.zip.outputs.version }}"
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -eq 0) { gh release upload $tag "${{ steps.zip.outputs.zip }}" --clobber; exit 0 }
+          gh release create $tag "${{ steps.zip.outputs.zip }}" --target "${{ github.sha }}" --title "PinDesk para Flow Launcher ${{ steps.zip.outputs.version }}" --notes "Plugin de PinDesk para Flow Launcher. Necesita PinDesk instalado: https://github.com/1xmanMAX/PINDESK-"
       - uses: actions/upload-artifact@v4
         with:
           name: PinDesk-plugin
